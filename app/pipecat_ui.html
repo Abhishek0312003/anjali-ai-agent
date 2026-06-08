@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anaya — St. Mary's College Voice Assistant</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 24px;
+    padding: 40px 36px;
+    width: 380px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .logo {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    background: linear-gradient(90deg, #a78bfa, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 32px;
+  }
+
+  /* Orb */
+  .orb-wrap {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 28px;
+    cursor: pointer;
+  }
+
+  .orb {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #a78bfa, #6d28d9);
+    box-shadow: 0 0 30px rgba(167,139,250,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    z-index: 2;
+  }
+
+  .orb svg { width: 48px; height: 48px; fill: white; }
+
+  .orb-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: 2px solid rgba(167,139,250,0.4);
+    z-index: 1;
+    transition: opacity 0.3s;
+    opacity: 0;
+  }
+
+  /* States */
+  .orb-wrap.listening .orb {
+    background: radial-gradient(circle at 35% 35%, #f87171, #dc2626);
+    box-shadow: 0 0 40px rgba(248,113,113,0.6);
+    animation: pulse-orb 1.2s ease-in-out infinite;
+  }
+  .orb-wrap.listening .orb-ring { opacity: 1; animation: ring-expand 1.2s ease-out infinite; }
+
+  .orb-wrap.speaking .orb {
+    background: radial-gradient(circle at 35% 35%, #34d399, #059669);
+    box-shadow: 0 0 40px rgba(52,211,153,0.6);
+    animation: pulse-orb 0.8s ease-in-out infinite;
+  }
+
+  .orb-wrap.thinking .orb {
+    background: radial-gradient(circle at 35% 35%, #fbbf24, #d97706);
+    box-shadow: 0 0 30px rgba(251,191,36,0.5);
+  }
+
+  @keyframes pulse-orb {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  @keyframes ring-expand {
+    0% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+    100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+  }
+
+  /* Status */
+  .status {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    min-height: 22px;
+    color: rgba(255,255,255,0.9);
+  }
+
+  .hint {
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 28px;
+    min-height: 18px;
+  }
+
+  /* Transcript */
+  .transcript-box {
+    background: rgba(0,0,0,0.25);
+    border-radius: 14px;
+    padding: 14px 16px;
+    min-height: 90px;
+    max-height: 160px;
+    overflow-y: auto;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 20px;
+    scrollbar-width: thin;
+  }
+
+  .transcript-box .msg { margin-bottom: 8px; }
+  .transcript-box .msg.user { color: #93c5fd; }
+  .transcript-box .msg.agent { color: #a7f3d0; }
+  .transcript-box .msg .label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 2px;
+  }
+
+  /* Button */
+  .btn-end {
+    background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #fca5a5;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: none;
+  }
+  .btn-end:hover { background: rgba(239,68,68,0.3); }
+  .btn-end.visible { display: inline-block; }
+
+  .wave-bars {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 24px;
+    margin-bottom: 4px;
+  }
+  .wave-bars span {
+    display: inline-block;
+    width: 3px;
+    background: #a78bfa;
+    border-radius: 2px;
+    animation: wave 1s ease-in-out infinite;
+    height: 6px;
+  }
+  .wave-bars span:nth-child(2) { animation-delay: 0.1s; }
+  .wave-bars span:nth-child(3) { animation-delay: 0.2s; }
+  .wave-bars span:nth-child(4) { animation-delay: 0.3s; }
+  .wave-bars span:nth-child(5) { animation-delay: 0.4s; }
+  @keyframes wave {
+    0%, 100% { height: 6px; }
+    50% { height: 20px; }
+  }
+  .wave-bars.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">St. Mary's College of Nursing</div>
+  <h1>Anaya</h1>
+  <p class="subtitle">AI Admission Counselor • हिंदी में बात करें</p>
+
+  <div class="orb-wrap" id="orb" onclick="toggleSession()">
+    <div class="orb-ring"></div>
+    <div class="orb">
+      <!-- Mic icon -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm-7 9h2a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.92V21h2v2H9v-2h2v-2.08A7 7 0 0 1 5 12z"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="wave-bars hidden" id="waveBars">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="status" id="status">Tap to start</div>
+  <div class="hint" id="hint">Click the orb to connect to Anaya</div>
+
+  <div class="transcript-box" id="transcript">
+    <div style="color:rgba(255,255,255,0.2); font-size:12px; text-align:center; padding-top:24px;">
+      Conversation will appear here
+    </div>
+  </div>
+
+  <button class="btn-end" id="btnEnd" onclick="endSession()">End Conversation</button>
+</div>
+
+<script>
+  let ws = null;
+  let mediaRecorder = null;
+  let audioContext = null;
+  let isConnected = false;
+  let audioQueue = [];
+  let isPlaying = false;
+
+  const orb = document.getElementById('orb');
+  const status = document.getElementById('status');
+  const hint = document.getElementById('hint');
+  const transcript = document.getElementById('transcript');
+  const btnEnd = document.getElementById('btnEnd');
+  const waveBars = document.getElementById('waveBars');
+
+  function setState(state, statusText, hintText) {
+    orb.className = 'orb-wrap ' + (state || '');
+    status.textContent = statusText;
+    hint.textContent = hintText;
+    waveBars.className = 'wave-bars' + (state === 'listening' ? '' : ' hidden');
+  }
+
+  function addMessage(role, text) {
+    // Remove placeholder
+    const placeholder = transcript.querySelector('div[style]');
+    if (placeholder) placeholder.remove();
+
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.innerHTML = `<div class="label">${role === 'user' ? 'You' : 'Anaya'}</div>${text}`;
+    transcript.appendChild(div);
+    transcript.scrollTop = transcript.scrollHeight;
+  }
+
+  async function toggleSession() {
+    if (isConnected) return;
+    await startSession();
+  }
+
+  async function startSession() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioContext = new AudioContext({ sampleRate: 16000 });
+
+      const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${wsProtocol}://${location.host}/pipecat-ws`);
+      ws.binaryType = 'arraybuffer';
+
+      ws.onopen = () => {
+        isConnected = true;
+        setState('listening', 'Connecting...', 'Setting up Anaya...');
+        btnEnd.className = 'btn-end visible';
+
+        // Start sending audio
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+
+        processor.onaudioprocess = (e) => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            const float32 = e.inputBuffer.getChannelData(0);
+            const int16 = new Int16Array(float32.length);
+            for (let i = 0; i < float32.length; i++) {
+              int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768));
+            }
+            ws.send(int16.buffer);
+          }
+        };
+
+        // Store so we can stop
+        ws._processor = processor;
+        ws._source = source;
+        ws._stream = stream;
+      };
+
+      ws.onmessage = async (e) => {
+        if (typeof e.data === 'string') {
+          const msg = JSON.parse(e.data);
+
+          if (msg.type === 'ready') {
+            setState('listening', 'Listening...', 'Speak now — Anaya is ready');
+
+          } else if (msg.type === 'transcript') {
+            addMessage('user', msg.text);
+            setState('thinking', 'Thinking...', 'Anaya is processing...');
+
+          } else if (msg.type === 'agent_text') {
+            addMessage('agent', msg.text);
+            setState('speaking', 'Speaking...', 'Anaya is responding');
+
+          } else if (msg.type === 'agent_done') {
+            setState('listening', 'Listening...', 'Your turn — speak now');
+
+          } else if (msg.type === 'error') {
+            setState('', 'Error', msg.message);
+          }
+
+        } else {
+          // Binary — WAV audio from agent
+          audioQueue.push(e.data);
+          if (!isPlaying) playNext();
+        }
+      };
+
+      ws.onclose = () => {
+        setState('', 'Disconnected', 'Session ended');
+        btnEnd.className = 'btn-end';
+        isConnected = false;
+        cleanup();
+      };
+
+      ws.onerror = () => {
+        setState('', 'Connection error', 'Could not connect to Anaya');
+      };
+
+    } catch (err) {
+      setState('', 'Microphone error', err.message);
+    }
+  }
+
+  async function playNext() {
+    if (audioQueue.length === 0) { isPlaying = false; return; }
+    isPlaying = true;
+    const wavData = audioQueue.shift();
+    try {
+      const decoded = await audioContext.decodeAudioData(wavData.slice(0));
+      const source = audioContext.createBufferSource();
+      source.buffer = decoded;
+      source.connect(audioContext.destination);
+      source.onended = () => playNext();
+      source.start();
+    } catch (e) {
+      console.warn('Audio decode error', e);
+      playNext();
+    }
+  }
+
+  function endSession() {
+    if (ws) ws.close();
+  }
+
+  function cleanup() {
+    if (ws && ws._processor) {
+      ws._processor.disconnect();
+      ws._source.disconnect();
+      ws._stream.getTracks().forEach(t => t.stop());
+    }
+    if (audioContext) { audioContext.close(); audioContext = null; }
+    audioQueue = [];
+    isPlaying = false;
+    ws = null;
+  }
+</script>
+</body>
+</html>

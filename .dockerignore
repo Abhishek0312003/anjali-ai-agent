@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual env — never copy into image
+venv/
+.venv/
+env/
+
+# Secrets — always excluded
+.env
+*.env
+
+# Dev / editor
+.git/
+.gitignore
+.DS_Store
+*.swp
+*.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Docs
+README.md

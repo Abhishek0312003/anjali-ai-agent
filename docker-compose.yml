@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  anjali-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: anjali-ai-agent
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Override PORT if needed — must match EXPOSE above
+      PORT: 8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
